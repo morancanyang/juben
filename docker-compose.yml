@@ -1,0 +1,29 @@
+services:
+  api:
+    build: ./api
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://mystery:${POSTGRES_PASSWORD}@postgres:5432/mystery
+      PROVIDER: ${PROVIDER:-mock}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      COOKIE_SECURE: "true"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports: ["8000:8000"]
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: mystery
+      POSTGRES_USER: mystery
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mystery -d mystery"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+volumes:
+  postgres-data:

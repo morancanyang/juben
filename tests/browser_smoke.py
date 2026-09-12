@@ -1,0 +1,104 @@
+"""Real-browser functional regression against an already running local API + built UI."""
+import json
+import os
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright, expect
+
+BASE=os.environ.get('E2E_BASE_URL','http://127.0.0.1:8765')
+OUT=Path(os.environ.get('E2E_OUTPUT_DIR','test-results'))
+OUT.mkdir(parents=True,exist_ok=True)
+
+
+def capture(page,name):
+    page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
+
+
+def main():
+    errors=[]
+    with sync_playwright() as p:
+        browser=p.chromium.launch(channel='chrome',headless=True)
+        context=browser.new_context(viewport={'width':1440,'height':1050},device_scale_factor=1)
+        page=context.new_page()
+        page.on('pageerror',lambda error:errors.append(str(error)))
+        page.goto(BASE,wait_until='domcontentloaded',timeout=15000)
+        page.wait_for_timeout(1200)
+        expect(page.get_by_role('heading',name='真相不会')).to_be_visible()
+        capture(page,'01-home-desktop')
+        print('HOME_OK',flush=True)
+        page.get_by_role('button',name='开始一局调查').click()
+        page.get_by_role('button').filter(has=page.get_by_role('heading',name='雨夜山庄',exact=True)).first.click()
+        expect(page.get_by_role('button',name='打开卷宗')).to_be_visible()
+        capture(page,'02-case-detail')
+        page.get_by_role('button',name='打开卷宗').click()
+        expect(page.get_by_role('heading',name='书房',exact=True)).to_be_visible()
+        page.get_by_role('button',name='书桌上的茶杯').click()
+        page.get_by_role('button',name='证物',exact=True).click()
+        page.get_by_role('button',name='残留的红茶').click()
+        page.get_by_role('button',name='分析证物').click()
+        expect(page.get_by_text('分析结论 · 已验证事实')).to_be_visible()
+        print('EVIDENCE_OK',flush=True)
+        page.get_by_label('向角色提问').fill('请问你什么时候送茶？')
+        page.get_by_role('button',name='发送问题').click()
+        expect(page.locator('.message-history').get_by_text('我在二十二点二十分把红茶放在书房门口。顾先生亲自取走，之后我去了档案室。')).to_be_visible(timeout=15000)
+        capture(page,'03-investigation-desktop')
+        page.get_by_role('button',name='笔记',exact=True).click()
+        page.get_by_label('笔记内容').fill('茶杯存在毒物，需要核对代糖来源。')
+        expect(page.get_by_text('已同步到存档',exact=True)).to_be_visible(timeout=10000)
+        context.set_offline(True)
+        page.get_by_label('笔记内容').fill('离线推测：需要核对针孔与代糖来源。')
+        expect(page.get_by_text('离线 · 草稿已存本机',exact=True)).to_be_visible(timeout=10000)
+        context.set_offline(False)
+        expect(page.get_by_text('已同步到存档',exact=True)).to_be_visible(timeout=10000)
+        print('NOTES_OFFLINE_OK',flush=True)
+        page.reload(wait_until='networkidle')
+        expect(page.get_by_role('heading',name='雨夜山庄',exact=True)).to_be_visible()
+        page.get_by_role('button',name='笔记',exact=True).click()
+        expect(page.locator('.saved-notes').get_by_text('离线推测：需要核对针孔与代糖来源。',exact=True)).to_be_visible()
+        page.get_by_role('button',name='搭档',exact=True).click()
+        page.get_by_role('button',name='请求一次分析').click()
+        expect(page.locator('.analysis-card')).to_be_visible()
+        page.get_by_role('button',name='提交结案',exact=True).click()
+        expect(page.get_by_role('heading',name='让证据说出答案。')).to_be_visible()
+        for select in page.locator('.form-grid select').all():
+            value=select.locator('option').nth(1).get_attribute('value');select.select_option(value=value)
+        page.get_by_label('我已准备好结束调查并揭示真相。').check()
+        page.get_by_role('button',name='确认结案',exact=True).click()
+        expect(page.get_by_role('heading',name='迷雾未散',exact=True)).to_be_visible(timeout=15000)
+        capture(page,'04-ending-desktop')
+        print('ENDING_OK',flush=True)
+        page.get_by_role('button',name='剧本工作台',exact=True).click()
+        expect(page.get_by_label('剧本标题')).to_be_visible()
+        page.get_by_role('button',name='运行质检',exact=True).click()
+        expect(page.get_by_role('heading',name='结构质检通过',exact=True)).to_be_visible()
+        page.get_by_role('button',name='保存新版本').click()
+        expect(page.get_by_role('status')).to_contain_text('私人草稿版本',timeout=10000)
+        capture(page,'05-editor-desktop')
+        page.get_by_role('button',name='冻结并试玩').click()
+        expect(page.get_by_role('heading',name='展柜里的空位',exact=True)).to_be_visible(timeout=15000)
+        print('EDITOR_OK',flush=True)
+        context.set_offline(True)
+        page.get_by_role('button',name='展柜日志').click()
+        expect(page.get_by_text('1 条调查意图待处理')).to_be_visible()
+        context.set_offline(False)
+        page.get_by_role('button',name='联网核验并同步').click()
+        expect(page.get_by_text('1 条调查意图待处理')).not_to_be_visible(timeout=10000)
+        print('OFFLINE_INTENT_OK',flush=True)
+        page.set_viewport_size({'width':390,'height':844})
+        page.get_by_role('button',name='总览',exact=True).click()
+        expect(page.get_by_role('heading',name='真相不会')).to_be_visible()
+        capture(page,'06-home-mobile')
+        assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth+1'),'horizontal overflow mobile home'
+        page.get_by_role('button',name='当前调查',exact=True).click()
+        expect(page.get_by_role('heading',name='展柜里的空位',exact=True)).to_be_visible()
+        capture(page,'07-investigation-mobile')
+        assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth+1'),'horizontal overflow mobile game'
+        print('MOBILE_OK',flush=True)
+        context.close();browser.close()
+    result={'status':'passed','browser':'Chrome','viewports':['1440x1050','390x844'],'checks':['library','guest-start','search','analysis','dialogue','notes','offline-notes','reload','partner','wrong-ending','author-validation','author-save','freeze-play','offline-intent','mobile-overflow'],'page_errors':errors}
+    (OUT/'browser-report.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    if errors:raise AssertionError(errors)
+    print(json.dumps(result,ensure_ascii=False),flush=True)
+
+
+if __name__=='__main__':main()
