@@ -1,0 +1,272 @@
+[
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e1",
+    "title": "残留的红茶",
+    "description": "茶杯内有茶汤和白色结晶，杯沿只有顾衡本人的唇印。",
+    "source": "书房 · 书桌",
+    "time": "22:20—22:40",
+    "type": "trace"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e2",
+    "title": "完好的门锁",
+    "description": "门窗从内侧锁好。门锁表面没有划痕，也没有细线残留。",
+    "source": "书房 · 门口",
+    "time": "23:10",
+    "type": "object"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e3",
+    "title": "编号针管",
+    "description": "医疗箱里有一枚编号 Z-17 的细针管，残留少许透明液体。",
+    "source": "医务间 · 医疗箱",
+    "time": "18:00",
+    "type": "object"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e4",
+    "title": "诊疗付款单",
+    "description": "多笔款项转入周砚管理的诊所。最后一页写着“明日交警方核查”。",
+    "source": "走廊 · 档案柜",
+    "time": "案发前一日",
+    "type": "document"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e5",
+    "title": "被穿刺的代糖罐",
+    "description": "密封膜上有一个针孔，罐中代糖结晶形状与杯底残留相同。",
+    "source": "备茶间 · 代糖罐",
+    "time": "21:50",
+    "type": "trace"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e6",
+    "title": "门禁时间记录",
+    "description": "客房门禁记录：周砚 21:48 离开、22:06 返回；林晚 22:24 进入档案室；许知远 21:30 起在走廊。",
+    "source": "备茶间 · 值班记录",
+    "time": "21:48—22:24",
+    "type": "record"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e7",
+    "title": "投毒路径复原",
+    "description": "代糖罐针孔、针管和两处残留形成同一物证链。",
+    "source": "组合分析",
+    "time": "21:50 → 22:20",
+    "type": "deduction"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "e8",
+    "title": "收据背面的便笺",
+    "description": "林晚交出收据背面的便笺：“不再替他遮掩。账目和那年的事故一起说清。”",
+    "source": "林晚 · 出示付款单后",
+    "time": "案发前一日",
+    "type": "document"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e1",
+    "title": "最后一段录音",
+    "description": "录音末尾，唐序说：“材料会在早晨自动发出。”随后是广播报时“零点二十九分”。",
+    "source": "卧铺间 · 录音笔",
+    "time": "显示 00:29",
+    "type": "record"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e2",
+    "title": "被扯断的衣扣",
+    "description": "唐序外套扣子被拉断，颈枕背后留有窄而深的勒痕。",
+    "source": "卧铺间 · 颈枕",
+    "time": "00:24 左右",
+    "type": "trace"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e3",
+    "title": "蓝色门禁卡碎片",
+    "description": "塑料角上印着“墨衡数据”，断口附着外套纤维。",
+    "source": "卧铺间 · 座椅下",
+    "time": "案发时",
+    "type": "object"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e4",
+    "title": "匿名举报材料",
+    "description": "材料指向墨衡数据出售乘客隐私，附有转账记录和记者署名。",
+    "source": "乘务台 · 资料袋",
+    "time": "案发当日",
+    "type": "document"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e5",
+    "title": "独立供电日志",
+    "description": "应急记录器采用卫星授时：00:20 主电源断开，00:24 后端4号隔间门打开，00:29 主电源恢复。",
+    "source": "车厢过道 · 记录器",
+    "time": "00:20—00:29",
+    "type": "record"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e6",
+    "title": "藏入接缝的钢丝",
+    "description": "扶手接缝内卷着一段细钢丝，一端黏着灰色手套纤维。",
+    "source": "车厢过道 · 扶手接缝",
+    "time": "案发后",
+    "type": "object"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e7",
+    "title": "校正后的案发时间",
+    "description": "录音报时与独立日志并列后，五分钟的误差被消除。",
+    "source": "组合分析",
+    "time": "00:24",
+    "type": "deduction"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "e8",
+    "title": "门禁卡背面编号",
+    "description": "沈墨把卡放在桌上。背面编号与资料中的授权记录一致。",
+    "source": "沈墨 · 出示碎片后",
+    "time": "案发当日",
+    "type": "document"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e1",
+    "title": "独立温度曲线",
+    "description": "20:26 温度急降，20:34 达到危险低温，20:38 恢复。",
+    "source": "低温实验舱 · 记录器",
+    "time": "20:26—20:38",
+    "type": "record"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e2",
+    "title": "联锁旁路开关",
+    "description": "开关停在维护旁路位，封签被完整揭起后重新贴回。",
+    "source": "实验舱 · 舱门面板",
+    "time": "20:25",
+    "type": "object"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e3",
+    "title": "签名权限日志",
+    "description": "20:25，令牌 S-02 开启联锁旁路；20:26，同一签名启动强冷。",
+    "source": "控制室 · 权限终端",
+    "time": "20:25—20:26",
+    "type": "record"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e4",
+    "title": "原始观测数据包",
+    "description": "数据包包含两个版本，手工修改部分标注“系统维护补正”。",
+    "source": "控制室 · 待发送目录",
+    "time": "案发当日",
+    "type": "document"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e5",
+    "title": "定时消息任务",
+    "description": "“实验正常”创建于 20:22，计划在 20:55 以站长账号发送，任务创建令牌为 S-02。",
+    "source": "通信室 · 任务队列",
+    "time": "20:22 → 20:55",
+    "type": "record"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e6",
+    "title": "S-02 维护令牌",
+    "description": "令牌仍在苏遥工具袋内。表面有与控制室读卡槽对应的新擦痕。",
+    "source": "工具间 · 苏遥工具袋",
+    "time": "20:25—20:26",
+    "type": "object"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e7",
+    "title": "发送与死亡的错位",
+    "description": "温度曲线与任务队列并列，显示两条独立时间线。",
+    "source": "组合分析",
+    "time": "20:22 / 20:34 / 20:55",
+    "type": "deduction"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "e8",
+    "title": "未上传的撤销请求",
+    "description": "苏遥提交了一条 20:39 的撤销定时消息请求，但由于断链未被处理。",
+    "source": "苏遥 · 出示权限日志后",
+    "time": "20:39",
+    "type": "document"
+  },
+  {
+    "case": "museum-example",
+    "case_title": "展柜里的空位",
+    "id": "log",
+    "title": "开柜日志",
+    "description": "19:12，维护卡 C-04 打开展柜。",
+    "source": "展厅 · 控制器",
+    "time": "19:12",
+    "type": "record"
+  },
+  {
+    "case": "museum-example",
+    "case_title": "展柜里的空位",
+    "id": "glove",
+    "title": "银粉手套",
+    "description": "手套掌心留有银色粉末。",
+    "source": "陈默 · 工作手套",
+    "time": "19:12",
+    "type": "trace"
+  },
+  {
+    "case": "museum-example",
+    "case_title": "展柜里的空位",
+    "id": "note",
+    "title": "收藏商收购便笺",
+    "description": "便笺约定当晚收购一枚相同编号的银徽章。",
+    "source": "展厅 · 休息桌",
+    "time": "当日",
+    "type": "document"
+  }
+]

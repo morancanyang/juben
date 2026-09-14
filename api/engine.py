@@ -145,6 +145,17 @@ def initial_state(config: dict, case: dict):
                 "alertness": 10,
                 "emotion": "平静",
                 "questions": {},
+                # NPC-private episodic memory.  It is stored under the NPC's
+                # own state node so agents can never accidentally read a
+                # different character's conversations.
+                "agent_memory": {
+                    "topics_discussed": [],
+                    "last_question": "",
+                    "contradictions": [],
+                    "promises": [],
+                    "trust_history": [40],
+                    "known_player_claims": [],
+                },
                 "observed": False,
             }
             for c in case["characters"]
@@ -305,7 +316,10 @@ def public_script(row: ScriptVersion, detail=False):
     if detail:
         value["intro"] = case["intro"]
         value["characters"] = [
-            {k: c[k] for k in ["id", "name", "role", "bio", "color"]}
+            {
+                **{k: c[k] for k in ["id", "name", "role", "bio", "color"]},
+                "avatar": f"{case['id']}-{c['id']}",
+            }
             for c in case["characters"]
         ]
     return value
@@ -344,6 +358,9 @@ def player_view(db: Session, game: GameSession):
                         "description": o["description"],
                         "available": matches(o["condition"], state),
                         "searched": f"{scene['id']}:{o['id']}" in state["searched"],
+                        "evidence_id": o["evidence_id"]
+                        if f"{scene['id']}:{o['id']}" in state["searched"]
+                        else None,
                     }
                     for o in scene["objects"]
                 ]
@@ -379,6 +396,7 @@ def player_view(db: Session, game: GameSession):
     characters = []
     for c in case["characters"]:
         public = {k: c[k] for k in ["id", "name", "role", "bio", "color"]}
+        public["avatar"] = f"{case['id']}-{c['id']}"
         public.update(
             {
                 k: state["characters"][c["id"]][k]

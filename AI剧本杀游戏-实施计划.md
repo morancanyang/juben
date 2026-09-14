@@ -1,10 +1,10 @@
 # AI剧本杀游戏实施计划
 
-**版本：** V1.0  **状态：** 待评审  **依据：** 产品需求文档 V1.0.0、技术与实施方案 V1.0、实施计划生成提示词
+**版本：** V1.1  **状态：** 按当前 MVP 进度更新  **依据：** 产品需求文档 V1.1.0、技术与实施方案 V1.1、当前仓库代码与测试结果
 
 ## 1. 实施计划摘要
 
-本计划以 Python FastAPI、React TypeScript、PostgreSQL、Redis/队列、Docker 为基线，采用“先确定性规则和数据权限、再接入模型、最后完善编辑器与生成内容”的顺序。MVP 目标是完成 3 个可玩的单人剧本，支持角色对话、三层防泄露、证物、笔记、AI 搭档、结算、真相揭示、自动存档和 GPT/DeepSeek 两个 Provider。多人联机和社交系统不在范围内。
+本计划以当前已运行的 Python FastAPI、React TypeScript、SQLite 为 MVP 基线，以 PostgreSQL、Redis/队列和 Docker 为生产演进目标，采用“先确定性规则和数据权限、再接入模型、最后完善编辑器与生成内容”的顺序。MVP 目标是完成 3 个可玩的单人剧本，支持角色对话、三层防泄露、证物、笔记、AI 搭档、结算、真相揭示、自动存档和 GPT/DeepSeek 两个 Provider。多人联机和社交系统不在范围内。
 
 **建议周期：** 10—12 周，实际工期需根据人员数量、剧本素材、模型额度和部署环境验证。  
 **关键路径：** M0 → 数据模型 → 内容 Schema/规则引擎 → 会话状态 → 角色上下文 → 防泄露 → 流式交付 → 结算 → E2E。  
@@ -515,3 +515,37 @@ MVP 包含：游客/账号、剧本库、至少三个固定版本剧本、开局
 6. 目标并发会话数、P95 延迟、RPO/RTO 和费用上限是什么？
 7. 自定义编辑器 MVP 是否接受基础表单版而非完整拖拽画布？
 8. 数据保存、导出、删除和外部模型区域要求由谁最终确认？
+
+
+## 16. 当前进度与下一步（2026-09-14）
+
+### 16.1 已完成（可运行 MVP）
+
+| 工作包 | 当前结果 | 证据 |
+|---|---|---|
+| 基础服务与身份 | FastAPI、SQLite、游客/注册/登录、自动存档、导出删除 | `api/main.py`、`api/identity_api.py`、`api/models.py` |
+| 三本案件内容 | 雨夜山庄、末班列车、无声回响均可调查和结案 | `api/seed_content.py` |
+| 规则与证物 | 场景调查、证物发现/分析/出示/组合、条件和触发器 | `api/engine.py`、`api/game_api.py` |
+| NPC 独立 Agent | 正式案件 9 名 NPC + 教学案件 2 名 NPC 使用独立 Profile、信任/警觉/情绪和私有记忆 | `api/agents.py`、`api/providers.py` |
+| DeepSeek | `deepseek-flash` 服务端接入、thinking 关闭、800 tokens、失败重试和用量账本 | `api/providers.py`、`.env` |
+| 对话交付 | 生成→审核→修订→语义块 SSE，支持取消、恢复和过期版本保护 | `api/agents.py`、`api/game_api.py` |
+| 影像与头像 | 证物影像粒子消散、NPC 职业头像、一对一聊天室和消息分栏 | `web/src/EvidenceViewer.tsx`、`web/src/PlayScript.tsx`、`web/src/media` |
+| 剧本工作台 | 私人草稿、模板、JSON、人数/证物调整、质检和冻结版本 | `api/scripts_api.py`、`web/src/ScriptEditor.tsx` |
+| 回归验证 | 后端 pytest 24 项全部通过；前端构建通过；自动化回归默认使用 mock Provider，真实 DeepSeek 安全指标仍待验证 | `tests/`、`npm run build` |
+
+### 16.2 当前优先级
+
+**启动口径：** 比赛联调统一使用项目根目录的 `run_server_env.py`，服务端端口 `8765`；日常开发入口仍为 README 中的 uvicorn `8000` + Vite `5173`，两者使用同一 SQLite 和代码。
+
+1. 用真实 DeepSeek 密钥完成多 NPC 对话回归：验证同问不同答、重复追问、无关闲聊回避和跨 NPC 记忆隔离；自动化 mock 通过不等于真实模型安全门禁通过。
+2. 补充 Agent 评测集：不同信任/警觉状态、越权问题、证物未解锁和模型复读证词。
+3. 将当前 MVP 的实际接口、环境变量和媒体规范同步到部署手册；统一常规 `8000/5173` 与联调 `8765` 启动说明，再评估 Redis/Worker、对象存储和 PostgreSQL 的迁移时机。
+4. 根据比赛演示需要，优化海报/项目 Icon、首屏加载、移动端布局和模型失败提示。
+
+### 16.3 规划任务的实际文件映射
+
+实施计划前文中的 `api/llm_service.py`、`api/evidence_models.py`、`api/evidence_api.py`、`api/database_api.py`、`web/Actor.tsx`、`web/EnhancedNotesPanel.tsx`、`web/MultipleChoiceGame.tsx` 和 `*_generator.py` 均为目标拆分命名，当前尚未创建。现阶段分别由 `api/providers.py`、`api/content.py`、`api/game_api.py`、`api/scripts_api.py`、`web/src/PlayScript.tsx`、`web/src/NotesPanel.tsx`、`web/src/Submission.tsx` 及 `tools/` 下本地渲染脚本承担。后续拆分前必须保持接口行为和权限测试不变。
+
+### 16.4 暂缓项目
+
+语音输入/播放、视频 NPC、多人联机、公开内容社区、动态案件生成、完整 React Flow 画布和模型权重微调暂不阻塞当前比赛版；实施任务中尚未存在的拆分模块需在迁移时更新为真实文件映射。

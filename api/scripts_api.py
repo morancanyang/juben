@@ -140,6 +140,37 @@ def save_draft(
     return {"id": row.id, "version": version, "content": raw}
 
 
+@router.put("/api/v1/author/drafts/{did}")
+def update_draft(
+    did: str,
+    body: DraftRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    """Persist edits to the currently selected private draft in place.
+
+    The explicit “保存新版本” action still creates an immutable version. This
+    endpoint is for the workbench autosave indicator so edits do not remain only
+    in localStorage after a draft has been created.
+    """
+    row = db.get(ScriptVersion, did)
+    if not row or row.owner_id != user.id:
+        raise GameError("NOT_FOUND", "找不到这份私人草稿。", 404)
+    if row.status == "frozen":
+        raise GameError("FROZEN_DRAFT", "冻结版本不可直接修改，请另存为新版本。", 409)
+    raw = deepcopy(body.content)
+    if not isinstance(raw.get("title"), str) or not raw["title"].strip() or len(raw["title"]) > 60:
+        raise GameError("INVALID_DRAFT", "草稿需要一个不超过60字的标题。")
+    sid = raw.get("id", row.script_id)
+    if not re.fullmatch(r"[a-zA-Z0-9_-]{1,60}", sid):
+        raise GameError("INVALID_DRAFT", "剧本 ID 格式无效。")
+    raw["id"] = row.script_id
+    row.content = raw
+    row.checksum = checksum(raw)
+    db.commit()
+    return {"id": row.id, "version": row.version, "content": raw, "status": row.status}
+
+
 @router.post("/api/v1/author/drafts/{did}/freeze")
 def freeze(did: str, db: Session = Depends(get_db), user: User = Depends(require_user)):
     row = db.get(ScriptVersion, did)
@@ -165,10 +196,29 @@ async def script_idea(body: IdeaRequest, user: User = Depends(require_user)):
 
     provider = user.preferences.get("provider", "mock")
     if provider == "mock":
+        variants = [
+            (
+                "闭馆前的异常",
+                "闭馆前最后一次盘点出现了不合常理的空缺。现场没有明显破坏，几位在场者却对同一段时间给出了不同说法。你需要把物品、门禁和行动顺序逐一对上。",
+                "雨声压过了闭馆广播。你进入{setting}时，管理员已经封锁现场；桌上的记录停在一个关键时间点，监控也留下了短暂空白。先查看现场，再分别询问人物，最后用证物验证谁的说法经得起核对。",
+            ),
+            (
+                "最后一件物证",
+                "一件重要物品在众目睽睽下消失，只留下几处互相矛盾的痕迹。每个人都能解释其中一部分，却没有人能解释全部。",
+                "你抵达{setting}时，工作人员正试图恢复秩序。失踪物品的存放位置、最后接触者和一条被忽略的记录，构成了调查的起点。保持现场原样，询问每个人，再确认时间线是否只有一种可能。",
+            ),
+            (
+                "没有锁上的秘密",
+                "现场看起来平静而完整，真正的线索藏在习惯动作、工作流程和一件不起眼的小物品里。你必须区分合理解释与事后编出的借口。",
+                "夜色降临后，{setting}只剩下几盏工作灯。负责人交给你一份不完整的记录，要求你在众人离开前找出矛盾。先记录环境和物品，再让每个角色独立说明自己的行动，最后提交唯一结论。",
+            ),
+        ]
+        index = sum(ord(ch) for ch in (body.title + body.setting)) % len(variants)
+        label, description, intro = variants[index]
         suggestion = {
-            "title": body.title,
-            "description": f"{body.setting}。一个物品失踪的案件让所有在场者停下脚步；他们各自隐瞒了一段经历，需要你用证物逐一核实。",
-            "intro": f"你进入{body.setting}。管理员请你保留现场、检查物品和时间记录。先观察环境，再分别询问人物，最后核对证据是否支持唯一结论。",
+            "title": body.title or label,
+            "description": f"{body.setting}。{description}",
+            "intro": intro.format(setting=body.setting),
         }
     else:
         suggestion = await model_json(

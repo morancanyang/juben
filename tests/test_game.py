@@ -149,6 +149,17 @@ def test_public_projection_and_reveal_lock(player):
     assert "标准答案" not in exported
     public = player.get("/api/v1/scripts/rain-manor").json()
     assert "statements" not in public["characters"][0]
+    assert public["characters"][0]["avatar"] == "rain-manor-lin"
+    assert state["characters"][0]["avatar"] == "rain-manor-lin"
+
+
+def test_scene_evidence_link_only_appears_after_discovery(player):
+    state = start(player)
+    assert all(obj["evidence_id"] is None for scene in state["scenes"] for obj in scene["objects"])
+    state = act(player, state, type="search", scene_id="study", object_id="o1")
+    study = next(scene for scene in state["scenes"] if scene["id"] == "study")
+    assert study["objects"][0]["evidence_id"] == state["evidence"][0]["id"] == "e1"
+    assert study["objects"][1]["evidence_id"] is None
 
 
 def test_cross_user_idor_and_csrf(player):
@@ -387,6 +398,19 @@ def test_delete_erases_owner_data_and_revokes_cookie(player):
     assert result.status_code == 200, result.text
     assert player.get("/api/v1/me").json()["user"] is None
     assert player.get("/api/v1/sessions/" + state["id"] + "/state").status_code == 401
+
+
+def test_local_dialogue_does_not_reuse_case_replies_for_smalltalk():
+    for case in make_cases():
+        case = validate_package(case)[0]
+        state = initial_state({"difficulty": "story"}, case)
+        for character in case["characters"]:
+            _, allowed, _ = authorized_actor(case, state, character["id"])
+            for question in ["你好", "为什么天空是蓝色的", "你喜欢卡通片吗", "你喜欢什么音乐"]:
+                stale = {question: [allowed[0]["id"]]}
+                assert local_candidate(question, allowed, stale)["statement_ids"] == []
+            assert local_candidate("案发时你在哪里？", allowed, {})["statement_ids"]
+            assert local_candidate("你好，案发时你在哪里？", allowed, {})["statement_ids"]
 
 
 def test_candidate_injection_and_legal_release_500_sample_regression():

@@ -81,9 +81,14 @@ def register(
         if user.username:
             raise GameError("ALREADY_REGISTERED", "当前档案已有账号，请先退出。", 409)
     else:
+        default_provider = settings.provider if (
+            settings.provider == "mock"
+            or (settings.provider == "deepseek" and settings.deepseek_api_key)
+            or (settings.provider == "openai" and settings.openai_api_key)
+        ) else "mock"
         user = User(
             nickname=body.username,
-            preferences={"provider": "mock", "theme": "dark", "font_size": "normal"},
+            preferences={"provider": default_provider, "theme": "dark", "font_size": "normal"},
         )
         db.add(user)
         db.flush()

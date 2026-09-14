@@ -7,6 +7,8 @@ import PlayScript from './PlayScript'
 import { Docs } from './Reveal'
 import Editor from './ScriptEditor'
 import SettingsPage from './SettingsPage'
+import AuthExperience from './auth/AuthExperience'
+import { isSessionUser } from './auth/AuthForm'
 
 export default function App(){
  const [user,setUser]=useState<User|null>(null)
@@ -18,6 +20,8 @@ export default function App(){
  const [notice,setNotice]=useState('')
  const [loading,setLoading]=useState(true)
  const [bootError,setBootError]=useState('')
+ const [authGate,setAuthGate]=useState(true)
+ const mainRef=useRef<HTMLElement>(null)
  const [startBusy,setStartBusy]=useState(false)
  const guestRequest=useRef<Promise<User>|null>(null)
  const userRef=useRef<User|null>(null)
@@ -26,7 +30,32 @@ export default function App(){
  const updateUser=useCallback((u:User|null)=>{saveUser(u);userRef.current=u;setUser(u)},[])
  const refreshHistory=useCallback(async()=>{if(userRef.current){const d=await api('/api/v1/sessions');setHistory(d.items)}},[])
  useEffect(()=>{const fn=()=>setPageState(location.hash.slice(1)||'home');window.addEventListener('hashchange',fn);return()=>window.removeEventListener('hashchange',fn)},[])
- useEffect(()=>{let live=true;(async()=>{try{const [me,lib]=await Promise.all([api('/api/v1/me'),api('/api/v1/scripts')]);if(!live)return;setScripts(lib.items);if(me.user){updateUser(me.user);const list=await api('/api/v1/sessions');if(!live)return;setHistory(list.items);const last=localStorage.getItem('casebook_active_'+me.user.id)||list.items[0]?.id;if(last){try{const state=await api(`/api/v1/sessions/${last}/state`);if(live)setSession(state)}catch{}}}}catch(e:any){if(live)setBootError('无法连接游戏服务。请运行项目中的启动脚本，再点击重试。')}finally{if(live)setLoading(false)}})();return()=>{live=false}},[updateUser])
+ useEffect(()=>{
+   let live=true; const controller=new AbortController()
+   const timeout=setTimeout(()=>controller.abort(),15000)
+   ;(async()=>{
+     const [me,lib]=await Promise.allSettled([api('/api/v1/me',{signal:controller.signal}),api('/api/v1/scripts',{signal:controller.signal})])
+     clearTimeout(timeout)
+     if(!live)return
+     if(lib.status==='fulfilled')setScripts(lib.value.items)
+     else setBootError('剧本库暂时无法载入，请检查游戏服务后重试。')
+     setLoading(false)
+     if(me.status==='rejected')setBootError('无法连接身份认证服务，请检查网络或游戏服务后重试。')
+     else if(isSessionUser(me.value.user)){
+       updateUser(me.value.user);setAuthGate(false)
+       try{
+         const list=await api('/api/v1/sessions',{signal:controller.signal});if(!live)return
+         setHistory(list.items)
+         let last=list.items[0]?.id
+         try{last=localStorage.getItem('casebook_active_'+me.value.user.id)||last}catch{}
+         if(last){try{const state=await api(`/api/v1/sessions/${last}/state`,{signal:controller.signal});if(live)setSession(state)}catch{}}
+       }catch{if(live)notify('身份已恢复，调查记录暂时无法载入。')}
+     }
+     if(live)setLoading(false)
+   })()
+   return()=>{live=false;clearTimeout(timeout);controller.abort()}
+ },[updateUser,notify])
+ useEffect(()=>{if(!authGate&&!loading)mainRef.current?.focus({preventScroll:true})},[authGate,loading])
  useEffect(()=>{if(!notice)return;const t=setTimeout(()=>setNotice(''),7000);return()=>clearTimeout(t)},[notice])
  useEffect(()=>{if(user){document.body.classList.toggle('large',user.preferences.font_size==='large');document.body.classList.toggle('light',user.preferences.theme==='light')}else{document.body.classList.remove('large','light')}},[user])
  const ensureUser=useCallback(async()=>{if(userRef.current)return userRef.current;if(!guestRequest.current){guestRequest.current=api('/api/v1/auth/guest',{method:'POST',body:'{}'}).then(d=>{updateUser(d.user);return d.user}).finally(()=>{guestRequest.current=null})}return guestRequest.current},[updateUser])
@@ -35,18 +64,19 @@ export default function App(){
  const setGame=useCallback((state:GameState)=>{setSession(state);const u=userRef.current;if(u){localStorage.setItem('casebook_active_'+u.id,state.id);if(state.phase==='investigation')localDB.snapshots.put({key:u.id+':'+state.id,userId:u.id,state}).catch(()=>{})}},[])
  const startGame=async(config:{difficulty:string;perspective:string;partner_style:string},scriptId?:string)=>{if(startBusy)return;const id=scriptId||selected?.id;if(!id)return;setStartBusy(true);try{await ensureUser();const d=await command('/api/v1/sessions',{script_id:id,...config});setGame(d.state);await refreshHistory();setPage('play');notify('案件已开封。搜索现场、分析证物，再向角色追问。')}catch(e:any){notify(e.message)}finally{setStartBusy(false)}}
  const resume=async(id?:string)=>{const sid=id||session?.id;if(!sid)return;try{await ensureUser();setGame(await api(`/api/v1/sessions/${sid}/state`));setPage('play')}catch(e:any){const cached=userRef.current?await localDB.snapshots.get(userRef.current.id+':'+sid):null;if(cached){setGame(cached.state);setPage('play');notify('正在查看上次保存的已知内容。离线行动会排队等待核验。')}else notify(e.message)}}
- const logout=async()=>{try{await api('/api/v1/auth/logout',{method:'POST'});await clearLocal();updateUser(null);setSession(null);setHistory([]);setPage('home')}catch(e:any){notify(e.message)}}
- const onAuthenticated=async(u:User)=>{await clearLocal();updateUser(u);setSession(null);await refreshHistory();notify('已登录，可从调查记录恢复游戏。')}
- return <div className="app-shell"><div className="grain"/><Sidebar page={page} setPage={setPage} user={user} onLogout={logout}/><main className="main-content"><Topbar page={page} setPage={setPage} user={user} onEnter={enter}/>
+ const logout=async()=>{try{await api('/api/v1/auth/logout',{method:'POST'});updateUser(null);setSession(null);setHistory([]);setNotice('');setAuthGate(true);setPage('home')}catch(e:any){notify(e.message)}}
+ const onAuthenticated=async(u:User)=>{updateUser(u);setSession(null);setHistory([]);setPage('home');void refreshHistory().catch(()=>notify('已登录，调查记录暂时无法载入。'))}
+ return <><div className="app-shell" inert={authGate} aria-hidden={authGate}><div className="grain"/><Sidebar page={page} setPage={setPage} user={user} onLogout={logout}/><main className="main-content" ref={mainRef} tabIndex={-1} aria-label="调查总览"><Topbar page={page} setPage={setPage} user={user} onEnter={enter}/>
  {bootError?<div className="empty-state"><h2>调查桌尚未就绪</h2><p>{bootError}</p><button className="primary-button" onClick={()=>location.reload()}>重试连接</button></div>:loading?<div className="empty-state" role="status"><span className="spinner"/> 正在整理卷宗…</div>:<>
  {page==='home'&&<><Home scripts={scripts} selected={selected} session={session} onOpen={openScript} onStart={()=>startGame({difficulty:'standard',perspective:'侦探',partner_style:'逻辑'})} onResume={()=>resume()} onLibrary={()=>setPage('library')}/>{history.length>0&&<History items={history} resume={resume}/>}</>}
  {page==='library'&&<Library scripts={scripts} selected={selected} onOpen={openScript} onClose={()=>setSelected(null)} start={startGame} busy={startBusy}/>}
  {['play','history'].includes(page)&&(session&&user?<PlayScript key={session.id} state={session} setState={setGame} user={user} notice={notify} setPage={setPage} refreshHistory={refreshHistory} showHistory={page==='history'}/>:<div className="empty-state"><BookOpen size={30}/><h2>还没有打开的卷宗</h2><p>选择一桩案件，即可开始调查。</p><button className="primary-button" onClick={()=>setPage('library')}>选择剧本</button>{history.length>0&&<History items={history} resume={resume}/>}</div>)}
  {page==='editor'&&<Editor user={user} ensureUser={ensureUser} notice={notify} start={id=>startGame({difficulty:'story',perspective:'侦探',partner_style:'逻辑'},id)}/>}
  {page==='docs'&&<Docs/>}
- {page==='settings'&&<SettingsPage user={user} updateUser={updateUser} ensureUser={ensureUser} onAuthenticated={onAuthenticated} onDeleted={async()=>{await clearLocal();updateUser(null);setSession(null);setHistory([]);setPage('home')}} notice={notify}/>}
+ {page==='settings'&&<SettingsPage user={user} updateUser={updateUser} ensureUser={ensureUser} onAuthenticated={onAuthenticated} onDeleted={async()=>{if(user)await clearLocal(user.id).catch(()=>{});updateUser(null);setSession(null);setHistory([]);setAuthGate(true);setPage('home')}} notice={notify}/>}
  {!['home','library','play','history','editor','docs','settings'].includes(page)&&<div className="empty-state"><h2>页面不存在</h2><button className="primary-button" onClick={()=>setPage('home')}>回到调查总览</button></div>}
  </>}
- </main>{notice&&<div className="toast" role="status"><ShieldCheck size={17}/><span>{notice}</span><button aria-label="关闭通知" onClick={()=>setNotice('')}><X size={15}/></button></div>}</div>
+ </main>{notice&&<div className="toast" role="status"><ShieldCheck size={17}/><span>{notice}</span><button aria-label="关闭通知" onClick={()=>setNotice('')}><X size={15}/></button></div>}</div>{authGate&&<AuthExperience loading={loading} bootError={bootError} onAuthenticated={onAuthenticated} onComplete={()=>setAuthGate(false)}/>}</>
 }
 function History({items,resume}:{items:HistoryItem[];resume:(id:string)=>void}){return <section className="page history-section"><div className="section-heading"><div><span className="section-kicker">MY CASES / 个人存档</span><h2>调查记录</h2></div></div><div className="history-grid">{items.slice(0,9).map(x=><button className="history-card" key={x.id} onClick={()=>resume(x.id)}><span className="section-kicker">{x.phase==='finished'?'已结案 · '+x.score+' 分':'调查进行中'}</span><h3>{x.script.title}</h3><p>{x.evidence_count} 件证物 · {formatDate(x.updated_at)}</p><span className="text-button">{x.phase==='finished'?'查看复盘':'继续调查'}<ChevronRight size={14}/></span></button>)}</div></section>}
+

@@ -172,15 +172,53 @@ async def dialogue(
     if not actor:
         raise GameError("NOT_FOUND", "找不到这位角色。", 404)
     provider = user.preferences.get("provider", settings.provider)
+    # Accounts created before model integration were pinned to the mock
+    # provider.  If a real provider is now configured, use it automatically;
+    # the preferences endpoint can still explicitly switch an account back to
+    # mock for offline testing.
+    if provider == "mock" and settings.provider != "mock" and settings.deepseek_api_key:
+        provider = settings.provider
     if not next(p for p in provider_status() if p["id"] == provider)["configured"]:
         raise GameError("MODEL_NOT_CONFIGURED", "该模型尚未配置密钥。", 409)
     new = deepcopy(game.state)
     spend(new)
     astate = new["characters"][actor["id"]]
+    # Keep an episodic memory per NPC.  Older sessions may predate this field,
+    # so hydrate it lazily without changing their existing question cache.
+    amemory = astate.setdefault(
+        "agent_memory",
+        {
+            "topics_discussed": [],
+            "last_question": "",
+            "contradictions": [],
+            "promises": [],
+            "trust_history": [astate.get("trust", 40)],
+            "known_player_claims": [],
+        },
+    )
     repeated = body.question in astate["questions"]
     astate["alertness"] = min(100, astate["alertness"] + (12 if repeated else 3))
     astate["trust"] = max(0, min(100, astate["trust"] + (-2 if repeated else 2)))
     astate["emotion"] = "警觉" if astate["alertness"] >= 50 else astate["emotion"]
+    topics = amemory.setdefault("topics_discussed", [])
+    if body.question not in topics:
+        topics.append(body.question)
+    amemory["topics_discussed"] = topics[-24:]
+    amemory["last_question"] = body.question
+    history = amemory.setdefault("trust_history", [])
+    history.append(astate["trust"])
+    amemory["trust_history"] = history[-24:]
+    if repeated:
+        contradictions = amemory.setdefault("contradictions", [])
+        marker = f"重复追问：{body.question}"
+        if marker not in contradictions:
+            contradictions.append(marker)
+        amemory["contradictions"] = contradictions[-12:]
+    # Preserve the player's wording as a claim the NPC has heard; this is
+    # private to the selected NPC and is never sent to other agents.
+    claims = amemory.setdefault("known_player_claims", [])
+    claims.append(body.question)
+    amemory["known_player_claims"] = claims[-24:]
     run = DialogueRun(
         id=str(uuid4()),
         session_id=sid,

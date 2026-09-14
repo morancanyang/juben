@@ -1,0 +1,112 @@
+[
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "lin",
+    "name": "林晚",
+    "role": "收藏家助理",
+    "bio": "陪伴顾衡工作六年，熟悉山庄的每一处细节。她一直攥着一条旧手帕。",
+    "personality": "措辞克制，谨慎地解释自己亲眼所见的事情。",
+    "color": "#9aa891"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "zhou",
+    "name": "周砚",
+    "role": "私人医生",
+    "bio": "顾家的老友，负责顾衡的日常诊疗。他的袖口沾着一小块茶色污迹。",
+    "personality": "专业而疏离，强调检查记录，受到追问时更简短。",
+    "color": "#aeb7c5"
+  },
+  {
+    "case": "rain-manor",
+    "case_title": "雨夜山庄",
+    "id": "xu",
+    "name": "许知远",
+    "role": "艺术品修复师",
+    "bio": "为一幅旧画来到山庄。顾衡取消了他的修复合同，他对此并不掩饰不满。",
+    "personality": "直率，略带讽刺，擅长观察器物细节。",
+    "color": "#c3a785"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "he",
+    "name": "何岚",
+    "role": "乘务长",
+    "bio": "负责本节车厢，能准确说出每一次巡查的时间。",
+    "personality": "干练，习惯引用工作流程。",
+    "color": "#aaae8e"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "shen",
+    "name": "沈墨",
+    "role": "数据公司高管",
+    "bio": "与记者认识，却坚持这次同车只是巧合。手套始终没有摘下。",
+    "personality": "沉稳，言辞精确，回避商业往来。",
+    "color": "#b7a4a0"
+  },
+  {
+    "case": "last-train",
+    "case_title": "末班列车",
+    "id": "qiao",
+    "name": "乔雨",
+    "role": "学生",
+    "bio": "坐在相邻隔间，抱着一本翻旧的乐谱。断电时一直戴着耳机。",
+    "personality": "紧张但愿意提供观察，不把猜测说成事实。",
+    "color": "#9caebc"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "su",
+    "name": "苏遥",
+    "role": "系统工程师",
+    "bio": "维护观测站通信与权限系统，称最后一条消息只是正常同步。",
+    "personality": "冷静，喜欢用技术细节界定问题。",
+    "color": "#90b4bd"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "lu",
+    "name": "陆沉",
+    "role": "气候研究员",
+    "bio": "韩川曾否决他的论文。观测站出事后，他最先提出保全原始数据。",
+    "personality": "严谨，心有不满但坚持数据证据。",
+    "color": "#b6a58f"
+  },
+  {
+    "case": "silent-station",
+    "case_title": "无声回响",
+    "id": "bai",
+    "name": "白芷",
+    "role": "站医",
+    "bio": "她确认了死亡，却不肯用终端消息推翻体征。",
+    "personality": "温和、准确，明确区分观察与诊断。",
+    "color": "#ada4bd"
+  },
+  {
+    "case": "museum-example",
+    "case_title": "展柜里的空位",
+    "id": "an",
+    "name": "安宁",
+    "role": "夜班管理员",
+    "bio": "负责展厅钥匙与日常盘点。",
+    "personality": "简洁，有问必答。",
+    "color": "#a5b49b"
+  },
+  {
+    "case": "museum-example",
+    "case_title": "展柜里的空位",
+    "id": "chen",
+    "name": "陈默",
+    "role": "灯光师",
+    "bio": "负责临时灯光安装，佩戴一张维护卡。",
+    "personality": "谨慎，倾向陈述工作流程。",
+    "color": "#bba890"
+  }
+]
