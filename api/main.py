@@ -41,6 +41,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins.split(","),
+    # Quick Tunnel hostnames change whenever cloudflared reconnects.  Allow
+    # only HTTPS trycloudflare subdomains in addition to the explicit local
+    # origins, so a new temporary public address works without restarting the
+    # API or editing .env.
+    allow_origin_regex=r"^https://[a-z0-9-]+\.trycloudflare\.com$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Idempotency-Key", "X-CSRF-Token", "Last-Event-ID"],
@@ -54,7 +59,14 @@ async def request_boundary(request: Request, call_next):
     request.state.request_id = request_id
     if request.method not in ["GET", "HEAD", "OPTIONS"]:
         origin = request.headers.get("origin")
-        if origin and origin not in settings.allowed_origins.split(","):
+        trusted = set(settings.allowed_origins.split(","))
+        trusted_tunnel = bool(
+            origin
+            and __import__("re").fullmatch(
+                r"https://[a-z0-9-]+\.trycloudflare\.com", origin
+            )
+        )
+        if origin and origin not in trusted and not trusted_tunnel:
             return JSONResponse(
                 {
                     "error": {
