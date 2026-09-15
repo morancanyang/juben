@@ -12,4 +12,5 @@ runtime/
 test-results/
 playwright-report/
 *.log
+tools/cloudflared.exe
 .DS_Store
